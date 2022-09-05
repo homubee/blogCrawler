@@ -244,7 +244,7 @@ class NaverBlogCrawler:
 
         file.close()
 
-    def crawlAll(self, inputTitle):
+    def crawlAll(self, path = ".", titleHeader = "", isNumberHead = False):
         """
         카테고리 내 게시글 전체 크롤링
 
@@ -262,6 +262,25 @@ class NaverBlogCrawler:
 
         # 그냥 소스를 긁어와서는 내용을 찾을 수가 없음
         # 네이버에 카테고리 게시글 목록 보는 레이아웃이 2개 있는데, 아래쪽 카테고리 게시글 목록은 버그가 발생, 따라서 위쪽을 긁어오는 방식으로 구현함
+        # 번호 부여 여부에 따라 먼저 카운팅하여 전체 개수를 확인(가장 최신글부터 크롤링하므로 인덱스 붙이려면 전체 개수를 알아야 함)
+        count = 0
+        if isNumberHead:
+            while True:
+                print("https://blog.naver.com/PostTitleListAsync.naver?blogId="+crawler.blodId+"&currentPage="+str(pageNo)+"&categoryNo="+crawler.categoryNo+"&countPerPage=30")
+                postList = requests.get("https://blog.naver.com/PostTitleListAsync.naver?blogId="+crawler.blodId+"&currentPage="+str(pageNo)+"&categoryNo="+crawler.categoryNo+"&countPerPage=30").text
+                postList = postList[postList.find("tagQueryString")+24:-2]
+                postList = postList.split("&logNo=")
+                # 더이상 카테고리 게시글 목록이 넘어가지 않을 때까지 반복, 네이버 시스템 상 max 이상 넘어가면 max 값을 리턴해줌
+                if (prevPostList == postList):
+                    break
+                for i in postList:
+                    count += 1
+                pageNo += 1
+                prevPostList = postList
+        
+        pageNo = 1
+        prevPostList = None
+
         while True:
             print("https://blog.naver.com/PostTitleListAsync.naver?blogId="+crawler.blodId+"&currentPage="+str(pageNo)+"&categoryNo="+crawler.categoryNo+"&countPerPage=30")
             postList = requests.get("https://blog.naver.com/PostTitleListAsync.naver?blogId="+crawler.blodId+"&currentPage="+str(pageNo)+"&categoryNo="+crawler.categoryNo+"&countPerPage=30").text
@@ -278,7 +297,11 @@ class NaverBlogCrawler:
                 try:
                     crawler.setBeautifulSoup()
                     crawler.parsePage()
-                    crawler.write(inputPath, inputTitle)
+                    if isNumberHead:
+                        crawler.write(path, str(count) + ". " + titleHeader)
+                        count -= 1
+                    else:
+                        crawler.write(path, titleHeader)
                 except Exception as e:
                     print(e)
             pageNo += 1
@@ -297,12 +320,23 @@ if __name__ == "__main__":
         inputTitle = input("제목 머리글 입력 (입력하지 않으면 머리글 없이 생성됩니다.): ")
         if inputPath == "":
             inputPath = "."
-        crawler.write(inputPath, inputTitle)
-
+        
         isCategory = input("본 게시글이 포함된 카테고리 전체를 크롤링할까요? (Y/N) : ")
 
-        if isCategory == "Y":
-            crawler.crawlAll(inputTitle)
+        if isCategory == "Y" or isCategory == "y":
+
+            isNumberHead = input("게시글 순서에 따라 숫자를 추가할까요? (Y/N) : ")
+
+            if isNumberHead == "Y" or isNumberHead == "y":
+                isNumberHead = True
+            else:
+                isNumberHead = False
+            crawler.crawlAll(inputPath, inputTitle, isNumberHead)
+
+            
+        else:
+            crawler.write(inputPath, inputTitle)
+        
     except Exception as e:
         print(e)
     

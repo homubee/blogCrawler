@@ -12,13 +12,13 @@
 
 ## Environment
 - python 3.7.6
-- beautifulsoup4 4.9.3
+- beautifulsoup4 4.11.1
 
 ## Run
 
-### Dependencies
+### Set up
 
-    pip install beautifulsoup4
+    pip install -r requirements.txt
 
 ### Main
 
@@ -30,6 +30,7 @@
     저장할 경로를 입력 (입력하지 않으면 현재 경로에 생성됩니다.) : [save directory path]
     제목 머리글 입력 (입력하지 않으면 머리글 없이 생성됩니다.): [title prefix]
     본 게시글이 포함된 카테고리 전체를 크롤링할까요? (Y/N) : [Y/N]
+    게시글 순서에 따라 숫자를 추가할까요? (Y/N) : [Y/N]
 
     ... (crawling process will be printed here) ...
 
